@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch Text Replace</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      display: flex;
+      width: 90%;
+      max-width: 1200px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    .left,
+    .right {
+      flex: 1;
+      border-radius: 20px;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .left {
+      position: relative;
+    }
+
+    .section-heading {
+      margin-top: -10px;
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #555;
+    }
+
+    .left textarea {
+      width: 100%;
+      flex-grow: 1;
+      resize: none;
+      border-radius: 15px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-family: monospace;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .left textarea::placeholder {
+      text-align: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 16px;
+    }
+
+    .right {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .right-header {
+      padding: 10px;
+      background: white;
+    }
+
+    .right-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      background: white;
+    }
+
+    .right-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      margin: 10px 0;
+      max-height: 500px;
+    }
+
+    .right .placeholder-set {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding-left: 35px;
+      padding-right: 30px;
+    }
+
+    .right .tag-button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: orangered;
+      color: white;
+      text-align: center;
+      line-height: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 10;
+    }
+
+    .tag-button.active {
+      background: limegreen;
+    }
+
+    .right input,
+    .right textarea {
+      flex: 1;
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      height: 30px;
+    }
+
+    .remove-button {
+      background: #ccc;
+      border: none;
+      border-radius: 5px;
+      padding: 3px 6px;
+      cursor: pointer;
+      position: absolute;
+      right: 0;
+      top: 0;
+      z-index: 10;
+    }
+
+    .right textarea {
+      resize: none;
+      overflow-y: auto;
+      transition: height 0.3s ease;
+    }
+
+    #replaceBtn {
+      font-size: large;
+      width: 40%;
+      margin: 20px auto 0;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background-color: #8400ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    #replaceBtn:hover {
+      background-color: #6f00ff;
+      box-shadow: 0 6px 8px rgba(183, 0, 255, 0.26);
+    }
+
+    #replaceBtn:active {
+      background-color: #160066;
+      box-shadow: 0 2px 4px rgb(0, 238, 255);
+    }
+
+    #result {
+      position: relative;
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 90%;
+    }
+
+    #resultText {
+      max-height: 720px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      padding: 10px;
+    }
+
+    #copyBtn {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    #copyBtn:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    #copyBtn:active {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+
+    #copyMessage {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background-color: white;
+      color: black;
+      font-weight: bold;
+      display: none;
+      z-index: 10;
+    }
+
+    .no-select {
+      user-select: none;
+    }
+
+    .scrollbar-style::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    .scrollbar-style::-webkit-scrollbar-track {
+      background: #ffffff;
+      border-radius: 10px;
+    }
+
+    .scrollbar-style::-webkit-scrollbar-thumb {
+      background-color: #d4d4d4;
+      border-radius: 10px;
+      border: 3px solid #ffffff;
+    }
+
+    .scrollbar-style::-webkit-scrollbar-thumb:hover {
+      background: #8a8a8a;
+    }
+
+    .textarea-container {
+      position: relative;
+      flex: 1;
+    }
+
+    .expand-icon {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .textarea-container:hover .expand-icon,
+    .textarea-container textarea:focus+.expand-icon {
+      opacity: 0.5;
+    }
+
+    .textarea-container:hover .expand-icon:hover,
+    .textarea-container textarea:focus+.expand-icon:hover {
+      opacity: 1;
+    }
+
+    .textarea-container textarea {
+      width: 100%;
+      height: 30px;
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      resize: none;
+      overflow-y: auto;
+      transition: height 0.3s ease;
+    }
+
+    .textarea-container textarea.expanded {
+      height: 400px;
+    }
+
+    textarea::selection {
+      background-color: #ffbb007e;
+    }
+
+    .placeholder-set:hover .tag-button.active~.textarea-container textarea:not(.expanded),
+    .tag-button.active~.textarea-container textarea:focus:not(.expanded) {
+      height: 120px;
+    }
+
+    /* Styles for Add Replace Tag button */
+    #addTagBtn {
+      margin-top: 0px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background-color: #00ff00;
+      font-weight: bold;
+      cursor: pointer;
+      align-self: center;
+      box-shadow: 0 4px 6px rgba(0, 255, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    #addTagBtn:hover {
+      background-color: #91ff00;
+      box-shadow: 0 6px 8px rgba(166, 255, 0, 0.2);
+    }
+
+    #addTagBtn:active {
+      background-color: #91cc00;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Styles for Reset button */
+    #resetBtn {
+      padding: 10px;
+      border: none;
+      border-radius: 50%;
+      background-color: transparent;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 class="no-select">Batch Text Replace</h1>
+  <div class="container">
+    <div class="left scrollbar-style">
+      <div class="section-heading">Text Input</div>
+      <textarea id="inputText"
+        placeholder="Enter the text for replacing, then select the replaceable text and click the replace tag (r1/r2/r3/etc. for each selection) to replace with 👉"></textarea>
+    </div>
+    <div class="right scrollbar-style" id="replacers">
+      <div class="section-heading">Replace With</div>
+      <div class="right-content scrollbar-style">
+        <!-- Placeholder sets will be appended here -->
+      </div>
+      <div class="right-footer">
+        <button id="addTagBtn" class="no-select">Add Replace Tag</button>
+        <button id="resetBtn" class="no-select">
+          <img src="https://img.icons8.com/?size=100&id=63322&format=png&color=000000" alt="Reset" width="24"
+            height="24">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <button id="replaceBtn" class="no-select">Batch Replace</button>
+  <div id="result" class="no-select">
+    <div id="resultText" class="scrollbar-style"></div>
+    <button id="copyBtn" class="no-select">
+      <img width="40" height="40" src="https://img.icons8.com/plasticine/40/documents.png" alt="documents" />
+    </button>
+    <div id="copyMessage" class="no-select">Copied!</div>
+  </div>
+
+  <script>
+    const replacersContainer = document.querySelector(".right-content");
+    const inputTextArea = document.getElementById("inputText");
+    const defaultReplacerCount = 12;
+    let replacerCount = defaultReplacerCount;
+    const resetBtn = document.getElementById("resetBtn");
+
+    resetBtn.addEventListener("mouseover", () => {
+      setTimeout(() => {
+        resetBtn.setAttribute("title", "Reset All The Preferences");
+      }, 1300);
+    });
+
+    function createTagSet(tag, value = '') {
+      const container = document.createElement("div");
+      container.className = "placeholder-set";
+
+      const button = document.createElement("div");
+      button.className = "tag-button";
+      button.innerText = tag;
+
+      const input = document.createElement("textarea");
+      input.placeholder = `Enter replacement for ${tag}`;
+      input.disabled = true;
+      input.value = value;
+
+      const textareaContainer = document.createElement("div");
+      textareaContainer.className = "textarea-container";
+
+      const expandIcon = document.createElement("img");
+      expandIcon.src = "https://img.icons8.com/tiny-glyph/16/expand-arrow.png";
+      expandIcon.alt = "expand-arrow";
+      expandIcon.width = 16;
+      expandIcon.height = 16;
+      expandIcon.className = "expand-icon";
+
+      expandIcon.addEventListener("click", () => {
+        input.classList.toggle("expanded");
+        input.style.transition = 'none';
+        input.offsetHeight; // Trigger reflow
+        input.style.transition = 'height 0.3s ease';
+      });
+
+      textareaContainer.appendChild(input);
+      textareaContainer.appendChild(expandIcon);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "remove-button";
+      removeBtn.innerText = "✖";
+
+      removeBtn.addEventListener("click", () => {
+        const pattern = new RegExp(`\\(${tag}<\\).*?\\(>${tag}\\)`, 'gs');
+        inputTextArea.value = inputTextArea.value.replace(pattern, (match) => {
+          const text = match.replace(new RegExp(`\\(${tag}<\\)|\\(>${tag}\\)`, 'g'), '');
+          return text;
+        });
+        updateAllTagStates();
+      });
+
+      button.addEventListener("click", () => {
+        const selection = inputTextArea.value.substring(inputTextArea.selectionStart, inputTextArea.selectionEnd);
+        if (selection && !button.classList.contains("active")) {
+          const tagged = `(${tag}<)${selection}(>${tag})`;
+          const start = inputTextArea.selectionStart;
+          const end = inputTextArea.selectionEnd;
+          inputTextArea.setRangeText(tagged, start, end, "end");
+          updateAllTagStates();
+        }
+      });
+
+      container.appendChild(button);
+      container.appendChild(textareaContainer);
+      container.appendChild(removeBtn);
+      replacersContainer.appendChild(container);
+    }
+
+    function initializePlaceholders() {
+      replacersContainer.innerHTML = "";
+      for (let i = 1; i <= defaultReplacerCount; i++) {
+        createTagSet(`r${i}`);
+      }
+    }
+
+    // Initialize placeholders immediately when the script runs
+    initializePlaceholders();
+    updateAllTagStates();
+
+    inputTextArea.addEventListener("input", updateAllTagStates);
+
+    function updateAllTagStates() {
+      document.querySelectorAll(".placeholder-set").forEach((set, index) => {
+        const tag = `r${index + 1}`;
+        const button = set.querySelector(".tag-button");
+        const input = set.querySelector("textarea");
+        const removeBtn = set.querySelector(".remove-button");
+        updateTagState(tag, button, input, removeBtn);
+      });
+    }
+
+    function updateTagState(tag, button, input, removeBtn) {
+      const content = inputTextArea.value;
+      const fullPattern = new RegExp(`\\(${tag}<\\).*?\\(>${tag}\\)`, 'gs');
+      const incompletePattern = new RegExp(`\\(${tag}<\\).*?$|^.*?\\(>${tag}\\)`);
+
+      if (fullPattern.test(content)) {
+        button.classList.add("active");
+        button.style.background = "limegreen";
+        input.disabled = false;
+        removeBtn.disabled = false;
+        input.placeholder = `Enter replacement for ${tag}`;
+      } else if (incompletePattern.test(content)) {
+        button.classList.remove("active");
+        button.style.background = "orangered";
+        input.disabled = true;
+        removeBtn.disabled = true;
+        input.placeholder = `Error: Replace tag is incomplete!`;
+      } else {
+        button.classList.remove("active");
+        button.style.background = "orangered";
+        input.disabled = true;
+        removeBtn.disabled = true;
+        input.placeholder = `Enter replacement for ${tag}`;
+      }
+    }
+
+    document.getElementById("replaceBtn").addEventListener("click", () => {
+      let content = inputTextArea.value;
+      document.querySelectorAll(".placeholder-set").forEach((set, index) => {
+        const tag = `r${index + 1}`;
+        const input = set.querySelector("textarea");
+        const regex = new RegExp(`\\(${tag}<\\)(.*?)\\(>${tag}\\)`, 'gs');
+        content = content.replace(regex, (match, p1) => {
+          return input.value || p1;
+        });
+      });
+      const resultText = document.getElementById("resultText");
+      resultText.innerText = content;
+      const copyBtn = document.getElementById("copyBtn");
+      if (content.trim() !== '') {
+        copyBtn.style.display = 'block';
+      } else {
+        copyBtn.style.display = 'none';
+      }
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", () => {
+      const resultText = document.getElementById("resultText").innerText;
+      navigator.clipboard.writeText(resultText).then(() => {
+        const copyMessage = document.getElementById("copyMessage");
+        copyMessage.style.display = "block";
+        setTimeout(() => {
+          copyMessage.style.display = "none";
+        }, 2000);
+      }).catch(err => {
+        console.error("Failed to copy: ", err);
+      });
+    });
+
+    document.getElementById("addTagBtn").addEventListener("click", () => {
+      replacerCount++;
+      createTagSet(`r${replacerCount}`);
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      inputTextArea.value = "";
+      initializePlaceholders();
+      updateAllTagStates();
+      localStorage.removeItem("inputText");
+      localStorage.removeItem("replacers");
+      const resultText = document.getElementById("resultText");
+      resultText.innerText = '';
+      document.getElementById("copyBtn").style.display = 'none';
+    });
+
+    window.addEventListener("load", () => {
+      const savedInputText = localStorage.getItem("inputText");
+      if (savedInputText) {
+        inputTextArea.value = savedInputText;
+      }
+
+      const savedReplacers = JSON.parse(localStorage.getItem("replacers")) || [];
+      const existingSets = document.querySelectorAll(".placeholder-set");
+      savedReplacers.forEach((replacer, index) => {
+        if (index < existingSets.length) {
+          const input = existingSets[index].querySelector("textarea");
+          input.value = replacer;
+        } else {
+          // Create additional tag sets if savedReplacers has more
+          createTagSet(`r${index + 1}`, replacer);
+        }
+      });
+      updateAllTagStates();
+    });
+
+    window.addEventListener("beforeunload", () => {
+      localStorage.setItem("inputText", inputTextArea.value);
+
+      const replacers = [];
+      document.querySelectorAll(".placeholder-set").forEach((set) => {
+        const input = set.querySelector("textarea");
+        replacers.push(input.value);
+      });
+      localStorage.setItem("replacers", JSON.stringify(replacers));
+    });
+  </script>
+</body>
+
+</html>
